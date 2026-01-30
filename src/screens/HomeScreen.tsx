@@ -1,209 +1,466 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Pressable,
+  Modal,
+  ScrollView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import ExerciseSelectionScreen from './ExerciseSelectionScreen';
 
-export default function HomeScreen() {
-  const [modalVisible, setModalVisible] = useState(false);
+interface Exercise {
+  id: string;
+  name: string;
+  category: string;
+  equipment: 'bodyweight' | 'dumbbells' | 'barbell' | 'machine' | 'cable';
+}
 
-  const handleRoutinePress = () => {
-    // TODO: Navigate to routine creation
-    setModalVisible(false);
+const HomeScreen: React.FC = () => {
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [showExerciseSelection, setShowExerciseSelection] = useState(false);
+
+  const handleExerciseSelect = (exercise: Exercise) => {
+    console.log('Selected exercise:', exercise);
+    // Here you can navigate to workout screen or add exercise to current workout
   };
 
-  const handleExercisePress = () => {
-    // TODO: Navigate to exercise creation
-    setModalVisible(false);
-  };
+  const QuickActionButton = ({ icon, title, onPress, color }: {
+    icon: string;
+    title: string;
+    onPress: () => void;
+    color: string;
+  }) => (
+    <View style={[styles.quickActionButtonWrapper, { backgroundColor: color }]}>
+      <Pressable style={styles.quickActionButton} onPress={onPress}>
+        <Ionicons name={icon as any} size={24} color="#fff" />
+        <Text style={styles.quickActionText}>{title}</Text>
+      </Pressable>
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Fitness Tracker</Text>
-      <Text style={styles.subtitle}>Welcome to your fitness journey!</Text>
-      
-      <View style={styles.startWorkoutContainer}>
-        <View style={styles.buttonWrapper}>
-          <Pressable 
-            style={styles.startWorkoutButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Ionicons name="add-circle" size={24} color="#fff" />
-            <Text style={styles.startWorkoutText}>Start Empty Workout</Text>
-          </Pressable>
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Good morning!</Text>
+            <Text style={styles.username}>Ready for your workout?</Text>
+          </View>
+          <View style={styles.notificationWrapper}>
+            <Pressable style={styles.notificationButton}>
+              <Ionicons name="notifications-outline" size={24} color="#333" />
+            </Pressable>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>
-          • Quick stats overview
-        </Text>
-        <Text style={styles.placeholderText}>
-          • Recent workouts
-        </Text>
-        <Text style={styles.placeholderText}>
-          • Current streak
-        </Text>
-        <Text style={styles.placeholderText}>
-          • Quick action buttons
-        </Text>
-      </View>
+        {/* Quick Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statLabel}>Workouts</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>3.2k</Text>
+            <Text style={styles.statLabel}>Calories</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>45m</Text>
+            <Text style={styles.statLabel}>Duration</Text>
+          </View>
+        </View>
 
+        {/* Today's Plan */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Today's Plan</Text>
+          <View style={styles.planCardWrapper}>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.planCard}
+            >
+              <View style={styles.planContent}>
+                <Text style={styles.planTitle}>Upper Body Strength</Text>
+                <Text style={styles.planDescription}>
+                  Focus on chest, shoulders, and arms
+                </Text>
+                <Text style={styles.planTime}>45 minutes • 8 exercises</Text>
+              </View>
+              <Ionicons name="fitness" size={40} color="#fff" style={styles.planIcon} />
+            </LinearGradient>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.addButtonWrapper}>
+              <Pressable
+                style={styles.addButton}
+                onPress={() => setShowQuickActions(true)}
+              >
+                <Ionicons name="add" size={20} color="#007AFF" />
+              </Pressable>
+            </View>
+          </View>
+          
+          <View style={styles.quickActionsGrid}>
+            <QuickActionButton
+              icon="barbell"
+              title="Start Workout"
+              onPress={() => console.log('Start workout')}
+              color="#FF6B6B"
+            />
+            <QuickActionButton
+              icon="time"
+              title="Quick Timer"
+              onPress={() => console.log('Quick timer')}
+              color="#4ECDC4"
+            />
+            <QuickActionButton
+              icon="stats-chart"
+              title="View Progress"
+              onPress={() => console.log('View progress')}
+              color="#45B7D1"
+            />
+            <QuickActionButton
+              icon="nutrition"
+              title="Log Meal"
+              onPress={() => console.log('Log meal')}
+              color="#96CEB4"
+            />
+          </View>
+        </View>
+
+        {/* Recent Activity */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <View style={styles.activityList}>
+            <View style={styles.activityItem}>
+              <View style={styles.activityIconWrapper}>
+                <Ionicons name="barbell" size={20} color="#007AFF" />
+              </View>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>Push Day Workout</Text>
+                <Text style={styles.activityDescription}>
+                  Completed • 42 minutes ago
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.activityItem}>
+              <View style={styles.activityIconWrapper}>
+                <Ionicons name="trophy" size={20} color="#FFD700" />
+              </View>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>New Personal Record</Text>
+                <Text style={styles.activityDescription}>
+                  Bench Press: 80kg • Yesterday
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Quick Actions Modal */}
       <Modal
+        visible={showQuickActions}
         animationType="slide"
         transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => setShowQuickActions(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Choose an option</Text>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Quick Actions</Text>
+              <View style={styles.modalCloseWrapper}>
+                <Pressable
+                  style={styles.modalCloseButton}
+                  onPress={() => setShowQuickActions(false)}
+                >
+                  <Ionicons name="close" size={24} color="#333" />
+                </Pressable>
+              </View>
+            </View>
             
-            <View style={styles.modalButtonWrapper}>
-              <Pressable 
-                style={styles.modalButton}
-                onPress={handleRoutinePress}
-              >
-                <Ionicons name="list" size={20} color="#fff" />
-                <Text style={styles.modalButtonText}>+ Routine</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.modalButtonWrapper}>
-              <Pressable 
-                style={styles.modalButton}
-                onPress={handleExercisePress}
-              >
-                <Ionicons name="fitness" size={20} color="#fff" />
-                <Text style={styles.modalButtonText}>+ Exercise</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.cancelButtonWrapper}>
-              <Pressable 
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </Pressable>
+            <View style={styles.modalContent}>
+              <QuickActionButton
+                icon="barbell"
+                title="Exercise"
+                onPress={() => {
+                  setShowQuickActions(false);
+                  setShowExerciseSelection(true);
+                }}
+                color="#FF6B6B"
+              />
+              <QuickActionButton
+                icon="timer"
+                title="Timer"
+                onPress={() => {
+                  setShowQuickActions(false);
+                  console.log('Timer');
+                }}
+                color="#4ECDC4"
+              />
+              <QuickActionButton
+                icon="nutrition"
+                title="Meal"
+                onPress={() => {
+                  setShowQuickActions(false);
+                  console.log('Meal');
+                }}
+                color="#96CEB4"
+              />
+              <QuickActionButton
+                icon="water"
+                title="Water"
+                onPress={() => {
+                  setShowQuickActions(false);
+                  console.log('Water');
+                }}
+                color="#74B9FF"
+              />
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+
+      {/* Exercise Selection Screen */}
+      <ExerciseSelectionScreen
+        visible={showExerciseSelection}
+        onClose={() => setShowExerciseSelection(false)}
+        onSelectExercise={handleExerciseSelect}
+      />
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
-  title: {
-    fontSize: 28,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  greeting: {
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
     color: '#333',
   },
-  subtitle: {
+  username: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 30,
+    marginTop: 4,
   },
-  startWorkoutContainer: {
+  notificationWrapper: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  notificationButton: {
+    padding: 12,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginVertical: 20,
+    paddingVertical: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  statItem: {
     alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  section: {
+    paddingHorizontal: 20,
     marginBottom: 30,
   },
-  buttonWrapper: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  addButtonWrapper: {
+    backgroundColor: '#f0f8ff',
+    borderRadius: 16,
     overflow: 'hidden',
   },
-  startWorkoutButton: {
+  addButton: {
+    padding: 8,
+  },
+  planCardWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  planCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    gap: 8,
-  },
-  startWorkoutText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  placeholder: {
-    backgroundColor: '#f8f9fa',
     padding: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#e9ecef',
-    borderStyle: 'dashed',
   },
-  placeholderText: {
+  planContent: {
+    flex: 1,
+  },
+  planTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  planDescription: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
+  },
+  planTime: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 8,
+  },
+  planIcon: {
+    opacity: 0.3,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  quickActionButtonWrapper: {
+    width: '48%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  quickActionButton: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  quickActionText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  activityList: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  activityIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityTitle: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  activityDescription: {
+    fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  modalContent: {
+  modalContainer: {
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    width: '80%',
-    maxWidth: 300,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 24,
     color: '#333',
   },
-  modalButtonWrapper: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
+  modalCloseWrapper: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
     overflow: 'hidden',
-    marginBottom: 12,
-    width: '100%',
   },
-  modalButton: {
+  modalCloseButton: {
+    padding: 8,
+  },
+  modalContent: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    gap: 8,
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButtonWrapper: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginTop: 12,
-    width: '100%',
-  },
-  cancelButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-  },
-  cancelButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '500',
+    paddingTop: 20,
+    gap: 12,
   },
 });
+
+export default HomeScreen;
