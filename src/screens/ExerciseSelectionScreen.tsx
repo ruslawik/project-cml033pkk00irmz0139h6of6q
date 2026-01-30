@@ -113,37 +113,28 @@ const EXERCISES: Exercise[] = [
   { id: '70', name: 'Burpees', category: 'Cardio', equipment: 'bodyweight', muscleGroup: 'Full Body' },
   { id: '71', name: 'Jumping Jacks', category: 'Cardio', equipment: 'bodyweight', muscleGroup: 'Full Body' },
   { id: '72', name: 'High Knees', category: 'Cardio', equipment: 'bodyweight', muscleGroup: 'Full Body' },
-  { id: '73', name: 'Jump Squats', category: 'Cardio', equipment: 'bodyweight', muscleGroup: 'Full Body' },
-  { id: '74', name: 'Battle Ropes', category: 'Cardio', equipment: 'cable', muscleGroup: 'Full Body' },
+  { id: '73', name: 'Jump Rope', category: 'Cardio', equipment: 'bodyweight', muscleGroup: 'Full Body' },
+  { id: '74', name: 'Box Jumps', category: 'Cardio', equipment: 'bodyweight', muscleGroup: 'Full Body' },
 ];
 
-const MUSCLE_GROUPS = [
-  'All', 'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 
-  'Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'
-];
-
-const EQUIPMENT_TYPES = ['All', 'bodyweight', 'dumbbells', 'barbell', 'machine', 'cable'];
-
-type SortType = 'alphabetical' | 'muscle-group';
+type SortType = 'alphabetical' | 'muscle';
 
 const ExerciseSelectionScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('All');
-  const [selectedEquipment, setSelectedEquipment] = useState('All');
   const [sortType, setSortType] = useState<SortType>('alphabetical');
+  const [selectedExercises, setSelectedExercises] = useState<Set<string>>(new Set());
 
   const filteredAndSortedExercises = useMemo(() => {
-    let filtered = EXERCISES.filter((exercise) => {
-      const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesMuscleGroup = selectedMuscleGroup === 'All' || exercise.muscleGroup === selectedMuscleGroup;
-      const matchesEquipment = selectedEquipment === 'All' || exercise.equipment === selectedEquipment;
-      return matchesSearch && matchesMuscleGroup && matchesEquipment;
-    });
+    let filtered = EXERCISES.filter(exercise =>
+      exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exercise.muscleGroup.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exercise.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     if (sortType === 'alphabetical') {
-      filtered = filtered.sort((a, b) => a.name.localeCompare(b.name));
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
     } else {
-      filtered = filtered.sort((a, b) => {
+      filtered.sort((a, b) => {
         if (a.muscleGroup !== b.muscleGroup) {
           return a.muscleGroup.localeCompare(b.muscleGroup);
         }
@@ -152,19 +143,38 @@ const ExerciseSelectionScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [searchQuery, selectedMuscleGroup, selectedEquipment, sortType]);
+  }, [searchQuery, sortType]);
 
-  const handleExerciseSelect = (exercise: Exercise) => {
-    console.log('Selected exercise:', exercise);
-    // Here you can add exercise to workout or navigate to exercise details
+  const groupedExercises = useMemo(() => {
+    if (sortType !== 'muscle') return [];
+    
+    const groups: { [key: string]: Exercise[] } = {};
+    filteredAndSortedExercises.forEach(exercise => {
+      if (!groups[exercise.muscleGroup]) {
+        groups[exercise.muscleGroup] = [];
+      }
+      groups[exercise.muscleGroup].push(exercise);
+    });
+    
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredAndSortedExercises, sortType]);
+
+  const handleExerciseSelect = (exerciseId: string) => {
+    const newSelected = new Set(selectedExercises);
+    if (newSelected.has(exerciseId)) {
+      newSelected.delete(exerciseId);
+    } else {
+      newSelected.add(exerciseId);
+    }
+    setSelectedExercises(newSelected);
   };
 
-  const getEquipmentIcon = (equipment: string) => {
+  const getEquipmentIcon = (equipment: Exercise['equipment']) => {
     switch (equipment) {
       case 'bodyweight':
-        return 'person';
+        return 'body';
       case 'dumbbells':
-        return 'fitness';
+        return 'barbell-outline';
       case 'barbell':
         return 'barbell';
       case 'machine':
@@ -172,181 +182,154 @@ const ExerciseSelectionScreen: React.FC = () => {
       case 'cable':
         return 'git-network';
       default:
-        return 'help';
+        return 'fitness';
     }
   };
 
   const renderExerciseItem = ({ item }: { item: Exercise }) => (
-    <View style={styles.exerciseItemWrapper}>
-      <Pressable
-        style={styles.exerciseItem}
-        onPress={() => handleExerciseSelect(item)}
-      >
+    <Pressable
+      style={[
+        styles.exerciseItem,
+        selectedExercises.has(item.id) && styles.selectedExerciseItem
+      ]}
+      onPress={() => handleExerciseSelect(item.id)}
+    >
+      <View style={styles.exerciseContent}>
         <View style={styles.exerciseInfo}>
           <Text style={styles.exerciseName}>{item.name}</Text>
-          <View style={styles.exerciseDetails}>
-            <Text style={styles.exerciseMuscleGroup}>{item.muscleGroup}</Text>
-            <View style={styles.equipmentContainer}>
+          <View style={styles.exerciseMeta}>
+            <View style={styles.metaItem}>
               <Ionicons
-                name={getEquipmentIcon(item.equipment) as any}
+                name={getEquipmentIcon(item.equipment)}
                 size={14}
                 color="#666"
               />
-              <Text style={styles.equipmentText}>{item.equipment}</Text>
+              <Text style={styles.metaText}>{item.equipment}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="fitness" size={14} color="#666" />
+              <Text style={styles.metaText}>{item.muscleGroup}</Text>
             </View>
           </View>
         </View>
-        <View style={styles.addButtonWrapper}>
-          <Pressable style={styles.addButton}>
-            <Ionicons name="add" size={20} color="#007AFF" />
-          </Pressable>
+        <View style={styles.exerciseActions}>
+          {selectedExercises.has(item.id) ? (
+            <Ionicons name="checkmark-circle" size={24} color="#007AFF" />
+          ) : (
+            <Ionicons name="add-circle-outline" size={24} color="#666" />
+          )}
         </View>
-      </Pressable>
-    </View>
+      </View>
+    </Pressable>
   );
 
-  const renderMuscleGroupButton = (muscleGroup: string) => (
-    <View key={muscleGroup} style={styles.filterButtonWrapper}>
-      <Pressable
-        style={[
-          styles.filterButton,
-          selectedMuscleGroup === muscleGroup && styles.filterButtonActive,
-        ]}
-        onPress={() => setSelectedMuscleGroup(muscleGroup)}
-      >
-        <Text
-          style={[
-            styles.filterButtonText,
-            selectedMuscleGroup === muscleGroup && styles.filterButtonTextActive,
-          ]}
-        >
-          {muscleGroup}
-        </Text>
-      </Pressable>
-    </View>
-  );
-
-  const renderEquipmentButton = (equipment: string) => (
-    <View key={equipment} style={styles.filterButtonWrapper}>
-      <Pressable
-        style={[
-          styles.filterButton,
-          selectedEquipment === equipment && styles.filterButtonActive,
-        ]}
-        onPress={() => setSelectedEquipment(equipment)}
-      >
-        <Text
-          style={[
-            styles.filterButtonText,
-            selectedEquipment === equipment && styles.filterButtonTextActive,
-          ]}
-        >
-          {equipment === 'All' ? 'All Equipment' : equipment}
-        </Text>
-      </Pressable>
-    </View>
-  );
+  const renderGroupedContent = () => {
+    return (
+      <ScrollView style={styles.groupedContent}>
+        {groupedExercises.map(([muscleGroup, exercises]) => (
+          <View key={muscleGroup} style={styles.muscleGroup}>
+            <Text style={styles.muscleGroupTitle}>{muscleGroup}</Text>
+            {exercises.map(exercise => (
+              <View key={exercise.id}>
+                {renderExerciseItem({ item: exercise })}
+              </View>
+            ))}
+          </View>
+        ))}
+      </ScrollView>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Exercise Library</Text>
-        <Text style={styles.headerSubtitle}>Choose exercises for your workout</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrapper}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search exercises..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#999"
           />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#666" />
+            </Pressable>
+          )}
         </View>
-      </View>
 
-      {/* Sort Toggle */}
-      <View style={styles.sortContainer}>
-        <Text style={styles.sortLabel}>Sort by:</Text>
-        <View style={styles.sortButtonWrapper}>
-          <Pressable
-            style={[
-              styles.sortButton,
-              sortType === 'alphabetical' && styles.sortButtonActive,
-            ]}
-            onPress={() => setSortType('alphabetical')}
-          >
-            <Text
+        {/* Sort Toggle */}
+        <View style={styles.sortContainer}>
+          <View style={styles.sortToggle}>
+            <Pressable
               style={[
-                styles.sortButtonText,
-                sortType === 'alphabetical' && styles.sortButtonTextActive,
+                styles.sortButton,
+                sortType === 'alphabetical' && styles.activeSortButton
               ]}
+              onPress={() => setSortType('alphabetical')}
             >
-              A-Z
-            </Text>
-          </Pressable>
-        </View>
-        <View style={styles.sortButtonWrapper}>
-          <Pressable
-            style={[
-              styles.sortButton,
-              sortType === 'muscle-group' && styles.sortButtonActive,
-            ]}
-            onPress={() => setSortType('muscle-group')}
-          >
-            <Text
+              <Text style={[
+                styles.sortButtonText,
+                sortType === 'alphabetical' && styles.activeSortButtonText
+              ]}>
+                A-Z
+              </Text>
+            </Pressable>
+            <Pressable
               style={[
-                styles.sortButtonText,
-                sortType === 'muscle-group' && styles.sortButtonTextActive,
+                styles.sortButton,
+                sortType === 'muscle' && styles.activeSortButton
               ]}
+              onPress={() => setSortType('muscle')}
             >
-              Muscle Groups
-            </Text>
-          </Pressable>
+              <Text style={[
+                styles.sortButtonText,
+                sortType === 'muscle' && styles.activeSortButtonText
+              ]}>
+                Muscle Groups
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
 
-      {/* Muscle Group Filter */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterTitle}>Muscle Groups</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-        >
-          {MUSCLE_GROUPS.map(renderMuscleGroupButton)}
-        </ScrollView>
-      </View>
-
-      {/* Equipment Filter */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterTitle}>Equipment</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-        >
-          {EQUIPMENT_TYPES.map(renderEquipmentButton)}
-        </ScrollView>
+        {/* Selected Count */}
+        {selectedExercises.size > 0 && (
+          <View style={styles.selectedCounter}>
+            <Text style={styles.selectedCounterText}>
+              {selectedExercises.size} exercise{selectedExercises.size !== 1 ? 's' : ''} selected
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Exercise List */}
-      <View style={styles.exerciseListContainer}>
-        <Text style={styles.resultsCount}>
-          {filteredAndSortedExercises.length} exercise{filteredAndSortedExercises.length !== 1 ? 's' : ''}
-        </Text>
-        <FlatList
-          data={filteredAndSortedExercises}
-          renderItem={renderExerciseItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.exerciseList}
-        />
+      <View style={styles.listContainer}>
+        {sortType === 'muscle' ? (
+          renderGroupedContent()
+        ) : (
+          <FlatList
+            data={filteredAndSortedExercises}
+            renderItem={renderExerciseItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          />
+        )}
       </View>
+
+      {/* Action Button */}
+      {selectedExercises.size > 0 && (
+        <View style={styles.actionButtonContainer}>
+          <View style={styles.actionButtonWrapper}>
+            <Pressable style={styles.actionButton} onPress={() => console.log('Start workout with selected exercises')}>
+              <Text style={styles.actionButtonText}>
+                Start Workout ({selectedExercises.size})
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -357,37 +340,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-  },
-  searchInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 16,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
@@ -395,31 +366,22 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   sortContainer: {
+    marginBottom: 12,
+  },
+  sortToggle: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  sortLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginRight: 12,
-  },
-  sortButtonWrapper: {
+    backgroundColor: '#f0f0f0',
     borderRadius: 8,
-    overflow: 'hidden',
-    marginRight: 8,
+    padding: 2,
   },
   sortButton: {
-    paddingHorizontal: 16,
+    flex: 1,
     paddingVertical: 8,
-    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
   },
-  sortButtonActive: {
+  activeSortButton: {
     backgroundColor: '#007AFF',
   },
   sortButtonText: {
@@ -427,82 +389,58 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#666',
   },
-  sortButtonTextActive: {
+  activeSortButtonText: {
     color: '#fff',
   },
-  filterSection: {
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+  selectedCounter: {
+    alignItems: 'center',
+    marginTop: 8,
   },
-  filterTitle: {
+  selectedCounterText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  filterScroll: {
-    paddingLeft: 20,
-  },
-  filterButtonWrapper: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginRight: 8,
-  },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#f8f9fa',
-  },
-  filterButtonActive: {
-    backgroundColor: '#007AFF',
-  },
-  filterButtonText: {
-    fontSize: 14,
+    color: '#007AFF',
     fontWeight: '500',
-    color: '#666',
   },
-  filterButtonTextActive: {
-    color: '#fff',
-  },
-  exerciseListContainer: {
+  listContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
   },
-  resultsCount: {
-    fontSize: 14,
-    color: '#666',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+  listContent: {
+    padding: 16,
+  },
+  groupedContent: {
+    flex: 1,
+    padding: 16,
+  },
+  muscleGroup: {
+    marginBottom: 24,
+  },
+  muscleGroupTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: '#007AFF',
+  },
+  exerciseItem: {
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  exerciseList: {
-    paddingVertical: 8,
-  },
-  exerciseItemWrapper: {
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    marginVertical: 4,
     borderRadius: 12,
-    overflow: 'hidden',
+    padding: 16,
+    marginBottom: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  exerciseItem: {
+  selectedExerciseItem: {
+    backgroundColor: '#e3f2fd',
+    borderWidth: 2,
+    borderColor: '#007AFF',
+  },
+  exerciseContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
   },
   exerciseInfo: {
     flex: 1,
@@ -513,35 +451,47 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
-  exerciseDetails: {
+  exerciseMeta: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  exerciseMuscleGroup: {
-    fontSize: 14,
-    color: '#666',
-    marginRight: 12,
-  },
-  equipmentContainer: {
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 16,
   },
-  equipmentText: {
+  metaText: {
     fontSize: 12,
     color: '#666',
     marginLeft: 4,
     textTransform: 'capitalize',
   },
-  addButtonWrapper: {
-    borderRadius: 20,
+  exerciseActions: {
+    marginLeft: 12,
+  },
+  actionButtonContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  actionButtonWrapper: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
     overflow: 'hidden',
   },
-  addButton: {
-    width: 36,
-    height: 36,
-    backgroundColor: '#f0f8ff',
-    justifyContent: 'center',
+  actionButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     alignItems: 'center',
+  },
+  actionButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
 

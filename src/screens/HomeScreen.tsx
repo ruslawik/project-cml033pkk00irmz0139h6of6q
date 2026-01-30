@@ -8,11 +8,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen: React.FC = () => {
+  const navigation = useNavigation();
+
   const handleStartWorkout = () => {
-    console.log('Starting empty workout...');
-    // Here you can navigate to workout screen or initialize empty workout
+    navigation.navigate('ExerciseSelection' as never);
   };
 
   return (
