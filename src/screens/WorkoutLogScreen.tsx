@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   State,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRoute, RouteProp } from '@react-navigation/native';
 
 interface Set {
   id: string;
@@ -32,10 +33,48 @@ interface Workout {
   date: string;
 }
 
+interface SelectedExercise {
+  id: string;
+  name: string;
+  category: string;
+  equipment: 'bodyweight' | 'dumbbells' | 'barbell' | 'machine' | 'cable';
+  muscleGroup: string;
+}
+
+type WorkoutLogRouteParams = {
+  selectedExercises?: SelectedExercise[];
+};
+
+type WorkoutLogRouteProp = RouteProp<{ WorkoutLog: WorkoutLogRouteParams }, 'WorkoutLog'>;
+
 const WorkoutLogScreen: React.FC = () => {
+  const route = useRoute<WorkoutLogRouteProp>();
   const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null);
   const [workoutName, setWorkoutName] = useState<string>('');
   const [draggedIndex, setDraggedIndex] = useState<number>(-1);
+
+  useEffect(() => {
+    const selectedExercises = route.params?.selectedExercises;
+    if (selectedExercises && selectedExercises.length > 0) {
+      startWorkoutWithExercises(selectedExercises);
+    }
+  }, [route.params?.selectedExercises]);
+
+  const startWorkoutWithExercises = (selectedExercises: SelectedExercise[]) => {
+    const workoutExercises: Exercise[] = selectedExercises.map(exercise => ({
+      id: exercise.id,
+      name: exercise.name,
+      sets: [],
+    }));
+
+    const newWorkout: Workout = {
+      id: Date.now().toString(),
+      name: workoutName || `Workout ${new Date().toLocaleDateString()}`,
+      exercises: workoutExercises,
+      date: new Date().toISOString(),
+    };
+    setCurrentWorkout(newWorkout);
+  };
 
   const startNewWorkout = () => {
     const newWorkout: Workout = {
@@ -274,8 +313,7 @@ const WorkoutLogScreen: React.FC = () => {
           >
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </Pressable>
-        </View>
-        <View style={styles.footerButtonContainer}>
+          
           <Pressable onPress={saveWorkout} style={styles.saveButton}>
             <Text style={styles.saveButtonText}>Save Workout</Text>
           </Pressable>
@@ -294,69 +332,68 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 32,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 30,
+    marginBottom: 32,
+    textAlign: 'center',
   },
   workoutNameInput: {
     width: '100%',
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
+    height: 48,
     backgroundColor: '#fff',
-    marginBottom: 30,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
+    color: '#333',
   },
   startButtonContainer: {
     width: '100%',
   },
   startButton: {
     backgroundColor: '#007AFF',
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    overflow: 'hidden',
   },
   startButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
   },
   workoutHeader: {
     backgroundColor: '#fff',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e1e5e9',
   },
   workoutTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 4,
   },
   workoutDate: {
     fontSize: 14,
     color: '#666',
-    marginTop: 4,
   },
   scrollView: {
     flex: 1,
-    padding: 16,
   },
   exerciseCard: {
     backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginVertical: 8,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -386,15 +423,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    marginBottom: 8,
+    borderBottomColor: '#e1e5e9',
+    marginBottom: 12,
   },
   setHeaderText: {
-    flex: 1,
     fontSize: 12,
     fontWeight: '600',
     color: '#666',
     textAlign: 'center',
+    width: 60,
   },
   setHeaderSpacer: {
     width: 30,
@@ -402,104 +439,104 @@ const styles = StyleSheet.create({
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    marginBottom: 12,
   },
   setNumber: {
-    flex: 1,
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
+    width: 60,
     textAlign: 'center',
   },
   setInput: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    fontSize: 16,
+    width: 60,
+    height: 36,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
     textAlign: 'center',
-    marginHorizontal: 4,
-    backgroundColor: '#f9f9f9',
+    fontSize: 16,
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   removeSetButton: {
-    width: 30,
-    alignItems: 'center',
+    marginLeft: 10,
+    padding: 4,
   },
   addSetButtonContainer: {
-    marginTop: 12,
-    alignItems: 'center',
+    marginTop: 8,
   },
   addSetButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#f0f8ff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderStyle: 'dashed',
   },
   addSetButtonText: {
-    color: '#007AFF',
     fontSize: 16,
+    color: '#007AFF',
     fontWeight: '500',
     marginLeft: 4,
   },
   addExerciseContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
+    marginHorizontal: 16,
+    marginVertical: 16,
   },
   addExerciseButton: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#007AFF',
     borderStyle: 'dashed',
   },
   addExerciseButtonText: {
-    color: '#007AFF',
     fontSize: 16,
-    fontWeight: '500',
+    color: '#007AFF',
+    fontWeight: '600',
     marginLeft: 8,
   },
   footer: {
-    flexDirection: 'row',
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: '#e1e5e9',
   },
   footerButtonContainer: {
-    flex: 1,
-    marginHorizontal: 8,
+    flexDirection: 'row',
+    gap: 12,
   },
   cancelButton: {
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1,
     backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#e1e5e9',
+    overflow: 'hidden',
   },
   cancelButtonText: {
     color: '#666',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   saveButton: {
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 2,
     backgroundColor: '#007AFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   saveButtonText: {
     color: '#fff',
